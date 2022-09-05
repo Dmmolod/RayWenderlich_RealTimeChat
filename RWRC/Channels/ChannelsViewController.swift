@@ -256,4 +256,11 @@ extension ChannelsViewController {
     let viewController = ChatViewController(user: currentUser, channel: channel)
     navigationController?.pushViewController(viewController, animated: true)
   }
+  
+  override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+    guard editingStyle == .delete,
+          let channelId = channels[indexPath.row].id else { return }
+    
+    channelReference.document(channelId).delete()
+  }
 }
