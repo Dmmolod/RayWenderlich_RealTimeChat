@@ -32,6 +32,7 @@
 
 import UIKit
 import Firebase
+import FirebaseAuth
 import MessageKit
 import FirebaseFirestore
 

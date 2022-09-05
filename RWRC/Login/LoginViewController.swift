@@ -39,7 +39,7 @@ final class LoginViewController: UIViewController {
   @IBOutlet private var displayNameField: UITextField!
   @IBOutlet private var actionButtonBackingView: UIView!
   @IBOutlet private var bottomConstraint: NSLayoutConstraint!
-
+  
   override var preferredStatusBarStyle: UIStatusBarStyle {
     return .lightContent
   }
@@ -57,6 +57,7 @@ final class LoginViewController: UIViewController {
       for: .primaryActionTriggered)
 
     registerForKeyboardNotifications()
+    displayNameField.attributedPlaceholder = NSAttributedString(string: "Ex. Johnny Appleseed", attributes: [.foregroundColor: UIColor.lightGray])
   }
 
   override func viewDidAppear(_ animated: Bool) {
@@ -97,7 +98,7 @@ final class LoginViewController: UIViewController {
       return
     }
 
-    displayNameField.resignFirstResponder()
+//    displayNameField.resignFirstResponder()
 
     AppSettings.displayName = name
     Auth.auth().signInAnonymously()
