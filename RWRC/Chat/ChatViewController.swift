@@ -59,6 +59,27 @@ final class ChatViewController: MessagesViewController {
     super.viewDidLoad()
     navigationItem.largeTitleDisplayMode = .never
     setUpMessageView()
+    messageInputBar.delegate = self
+    messagesCollectionView.messagesDataSource = self
+    messagesCollectionView.messagesLayoutDelegate = self
+    messagesCollectionView.messagesDisplayDelegate = self
+    removeMessageAvatars()
+  }
+  
+  private func insertNewMessage(_ message: Message) {
+    if messages.contains(message) { return }
+    
+    messages.append(message)
+    messages.sort()
+    
+    let isLatestMessage = messages.firstIndex(of: message) == (messages.count - 1)
+    let shouldScrollToBottom = messagesCollectionView.isAtBottom && isLatestMessage
+    
+    messagesCollectionView.reloadData()
+    
+    if shouldScrollToBottom {
+      messagesCollectionView.scrollToLastItem(animated: true)
+    }
   }
 
   private func setUpMessageView() {
@@ -66,17 +87,23 @@ final class ChatViewController: MessagesViewController {
     messageInputBar.inputTextView.tintColor = .primary
     messageInputBar.sendButton.setTitleColor(.primary, for: .normal)
   }
+  
+  private func removeMessageAvatars() {
+    guard let layout = messagesCollectionView.collectionViewLayout as? MessagesCollectionViewFlowLayout else { return }
+    layout.textMessageSizeCalculator.outgoingAvatarSize = .zero
+    layout.textMessageSizeCalculator.incomingAvatarSize = .zero
+    layout.setMessageIncomingAvatarSize(.zero)
+    layout.setMessageOutgoingAvatarSize(.zero)
+    let incomingLabelAlignment = LabelAlignment(textAlignment: .left,
+                                                textInsets: UIEdgeInsets(top: 0, left: 15, bottom: 0, right: 0))
+    let outgoingLabelAlignment = LabelAlignment(textAlignment: .right,
+                                                textInsets: UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 15))
+    layout.setMessageOutgoingMessageTopLabelAlignment(outgoingLabelAlignment)
+    layout.setMessageIncomingMessageTopLabelAlignment(incomingLabelAlignment)
+  }
 }
 
-// MARK: - MessagesDisplayDelegate
-extension ChatViewController: MessagesDisplayDelegate {}
-
-// MARK: - InputBarAccessoryViewDelegate
-extension ChatViewController: InputBarAccessoryViewDelegate {}
-
-// MARK: - UIImagePickerControllerDelegate
-extension ChatViewController: UIImagePickerControllerDelegate, UINavigationControllerDelegate {}
-
+// MARK: - MessagesDataSource
 extension ChatViewController: MessagesDataSource {
   
   func numberOfSections(in messagesCollectionView: MessagesCollectionView) -> Int {
@@ -98,9 +125,47 @@ extension ChatViewController: MessagesDataSource {
       .foregroundColor: UIColor(white: 0.3, alpha: 1)
     ])
   }
+}
 
+// MARK: - MessagesLayoutDelegate
+extension ChatViewController: MessagesLayoutDelegate {
   
- 
+  func footerViewSize(for section: Int, in messagesCollectionView: MessagesCollectionView) -> CGSize {
+    CGSize(width: 0, height: 8)
+  }
   
+  func messageTopLabelHeight(for message: MessageType, at indexPath: IndexPath, in messagesCollectionView: MessagesCollectionView) -> CGFloat {
+    20
+  }
   
 }
+
+// MARK: - MessagesDisplayDelegate
+extension ChatViewController: MessagesDisplayDelegate {
+  
+  func backgroundColor(for message: MessageType, at indexPath: IndexPath, in messagesCollectionView: MessagesCollectionView) -> UIColor {
+    isFromCurrentSender(message: message) ? .primary : .incomingMessage
+  }
+  
+  func configureAvatarView(_ avatarView: AvatarView,
+                           for message: MessageType,
+                           at indexPath: IndexPath,
+                           in messagesCollectionView: MessagesCollectionView) {
+    avatarView.isHidden = true
+  }
+  
+  func messageStyle(for message: MessageType,
+                    at indexPath: IndexPath,
+                    in messagesCollectionView: MessagesCollectionView) -> MessageStyle {
+    let corner: MessageStyle.TailCorner = isFromCurrentSender(message: message) ? .bottomRight : .bottomLeft
+    return .bubbleTail(corner, .curved)
+  }
+}
+
+// MARK: - InputBarAccessoryViewDelegate
+extension ChatViewController: InputBarAccessoryViewDelegate {}
+
+// MARK: - UIImagePickerControllerDelegate
+extension ChatViewController: UIImagePickerControllerDelegate, UINavigationControllerDelegate {}
+
+
